@@ -1,3 +1,0 @@
-pandas
-requests
-google-play-scraper
