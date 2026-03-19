@@ -97,7 +97,7 @@ threadpoolctl==3.6.0
 tifffile==2026.1.28
 toml==0.10.2
 
-torchvision==0.25.0+cu128
+
 tornado==6.5.4
 tqdm==4.67.3
 typing-inspection==0.4.2
