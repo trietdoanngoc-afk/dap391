@@ -8,7 +8,7 @@ Dự án cuối kỳ môn **DAP391** - Phân tích dữ liệu & Học máy (FPT
 * **Xử lý dữ liệu:** Áp dụng kỹ thuật **SMOTE** để cân bằng dữ liệu cực kỳ hiệu quả.
 
 ## 🛠️ Stack công nghệ
-* **Backend:** FastAPI (Python) chạy tại `localhost:8000`.
+* **Backend:** FastAPI (Python) chạy tại `localhost:8080`.
 * **Frontend:** HTML/CSS/JS thuần (Vanilla) - gọn nhẹ, tốc độ cao.
 * **Database:** TiDB Cloud (MySQL compatible).
 
