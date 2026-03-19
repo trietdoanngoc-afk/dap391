@@ -10,11 +10,12 @@ from pathlib import Path
 # =============================================================================
 
 TIDB_CONFIG = {
-    "host": "gateway01.ap-southeast-1.prod.aws.tidbcloud.com",
-    "port": 4000,
-    "user": "3x3Pw8kXsFE6rzh.root",
-    "password": "i8iPou2WrM4FIGQn",
-    "database": "Bank_Churn_Data",
+    # Ưu tiên lấy từ Render (os.getenv), nếu không có thì dùng giá trị mặc định
+    "host": os.getenv("DB_HOST", "gateway01.ap-southeast-1.prod.aws.tidbcloud.com"),
+    "port": int(os.getenv("DB_PORT", 4000)),
+    "user": os.getenv("DB_USER", "your_default_user"),
+    "password": os.getenv("DB_PASSWORD"), # Không để pass mặc định ở đây để bảo mật
+    "database": os.getenv("DB_NAME", "Bank_Churn_Data"),
     "table": "Sentify",
     "ca_path": str(Path(__file__).parent / "isrgrootx1.pem"),
 }
