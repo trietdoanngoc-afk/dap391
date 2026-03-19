@@ -1,0 +1,16 @@
+RANDOM FOREST — CHURN PREDICTION
+==================================================
+
+Accuracy: 0.9388 (93.9%)
+Train size: 19,669 | Test size: 4,918
+Features: 18
+
+Classification Report:
+              precision    recall  f1-score   support
+
+      Stayed       0.93      0.97      0.95      3029
+     Churned       0.95      0.89      0.92      1889
+
+    accuracy                           0.94      4918
+   macro avg       0.94      0.93      0.93      4918
+weighted avg       0.94      0.94      0.94      4918

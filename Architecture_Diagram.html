@@ -1,0 +1,132 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Sơ Đồ Kiến Trúc Hệ Thống - Churn Prediction</title>
+    <style>
+        body {
+            font-family: 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
+            background-color: #f8fafc;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            min-height: 100vh;
+            margin: 0;
+            padding: 20px;
+        }
+        .container {
+            background: white;
+            padding: 40px;
+            border-radius: 12px;
+            box-shadow: 0 10px 25px rgba(0,0,0,0.05);
+            max-width: 1000px;
+            width: 100%;
+            text-align: center;
+        }
+        h2 {
+            color: #1e293b;
+            margin-bottom: 5px;
+        }
+        p.subtitle {
+            color: #64748b;
+            margin-bottom: 30px;
+        }
+        .instruction {
+            margin-top: 30px;
+            padding: 15px;
+            background: #eff6ff;
+            color: #1d4ed8;
+            border-radius: 8px;
+            font-size: 14px;
+            border: 1px dashed #93c5fd;
+        }
+    </style>
+</head>
+<body>
+
+    <div class="container">
+        <h2>Sơ Đồ Kiến Trúc Hệ Thống (System Architecture)</h2>
+        <p class="subtitle">Mô hình luồng dữ liệu - Dự báo Rời bỏ Khách hàng</p>
+
+        <!-- Nơi Mermaid vẽ biểu đồ -->
+        <div class="mermaid">
+            graph TD
+                %% 1. Data Sources
+                subgraph S1 [1. Nguồn Dữ Liệu]
+                    A1["CRM Ngân Hàng<br/>(Structured Data)"]
+                    A2["App/Web Crawler<br/>(BeautifulSoup / Playwright)"]
+                end
+
+                %% 2. Processing Pipeline
+                subgraph S2 [2. Chuỗi Xử Lý Dữ Liệu - ETL]
+                    B1["Data Cleaning<br/>(Pandas / Numpy)"]
+                    B2["Feature Engineering & Resampling<br/>(Scikit-Learn / SMOTE)"]
+                    B3["Data Validation<br/>(Pydantic / Regex)"]
+                end
+
+                %% 3. Storage
+                subgraph S3 [3. Kho Lưu Trữ Đám Mây]
+                    C1[("TiDB Cloud / JSON Local<br/>Update Batch: 24h/Lần")]
+                end
+
+                %% 4. Backend
+                subgraph S4 [4. Máy Chủ Backend & AI]
+                    D1["REST API Server<br/>(FastAPI / Uvicorn)"]
+                    D2["Mô Hình Phân Lớp AI<br/>(Random Forest Classifier)"]
+                end
+
+                %% 5. Frontend
+                subgraph S5 [5. Giao Diện Dashboard]
+                    E1["Trực Quan Hóa Tĩnh + Động<br/>(Seaborn / Matplotlib / Chart.js)"]
+                    E2["Giao diện Web App<br/>(Native HTML5 / CSS3 / JS)"]
+                end
+
+                %% Data flow mapping
+                A1 -->|Raw Data| B1
+                A2 -->|Raw Data| B1
+                B1 --> B2
+                B2 --> B3
+                B3 -->|"Load Data (SQL/JSON)"| C1
+
+                C1 <-->|Truy vấn Query| D1
+                
+                D1 -->|Render Biểu Đồ| E1
+                E2 -->|"Gửi User Input (Fetch API)"| D1
+                D1 -.->|Đẩy Feature vào API| D2
+                D2 -.->|"Trả Probability Xanh/Đỏ"| D1
+                D1 -->|"Cảnh Báo Churn / Stay"| E2
+
+                classDef source fill:#eff6ff,stroke:#3b82f6,stroke-width:2px,color:#1e3a8a;
+                classDef process fill:#f3e8ff,stroke:#a855f7,stroke-width:2px,color:#581c87;
+                classDef db fill:#ecfdf5,stroke:#10b981,stroke-width:2px,color:#064e3b;
+                classDef backend fill:#fff7ed,stroke:#f97316,stroke-width:2px,color:#7c2d12;
+                classDef frontend fill:#ffe4e6,stroke:#f43f5e,stroke-width:2px,color:#881337;
+                
+                class A1,A2 source;
+                class B1,B2,B3 process;
+                class C1 db;
+                class D1,D2 backend;
+                class E1,E2 frontend;
+        </div>
+
+        <div class="instruction">
+            <strong>💡 Cách lấy ảnh nét nhất cho báo cáo:</strong><br>
+            C1: Phóng to trình duyệt web này (Ctrl + Lăn chuột), dùng tính năng chụp màn hình (Snipping Tool).<br>
+            C2: Right-click (Chuột phải) trực tiếp trên trang, chọn "Print" (In) -> Save as PDF để lấy ảnh Vector đưa vào Word.
+        </div>
+    </div>
+
+    <!-- Nhúng thư viện Mermaid JS qua CDN để tự vẽ -->
+    <script src="https://cdn.jsdelivr.net/npm/mermaid/dist/mermaid.min.js"></script>
+    <script>
+        mermaid.initialize({ 
+            startOnLoad: true, 
+            theme: 'default',
+            securityLevel: 'loose',
+            fontFamily: 'Segoe UI'
+        });
+    </script>
+</body>
+</html>

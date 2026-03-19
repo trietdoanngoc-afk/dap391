@@ -1,0 +1,248 @@
+
+======================================================================
+  ORIGINAL DATA
+======================================================================
+
+ Shape: (24587, 16)
+ Columns: ['review_id', 'date', 'bank_name', 'rating', 'churn', 'platform', 'sex', 'age', 'tenure', 'credit_score', 'balance', 'products_number', 'credit_card', 'active_member', 'data_source', 'content']
+
+ Sample (5 rows):
+     review_id       date    bank_name  rating  ...  credit_card active_member data_source  content
+0  95525050017 2025-11-08  Vietcombank       5  ...            1             0   synthetic      NaN
+1  42761098009 2025-04-18  Vietcombank       3  ...            1             1   synthetic      NaN
+2  77577919458 2025-09-09  Vietcombank       4  ...            1             1   synthetic      NaN
+3  73836065495 2026-01-22  Vietcombank       2  ...            0             1   synthetic      NaN
+4  72969808926 2026-02-13  Vietcombank       4  ...            1             1   synthetic      NaN
+
+======================================================================
+ 📌 STEP 1: DATA CLEANING
+======================================================================
+
+ Phương pháp:
+ • Drop Duplicates - Xóa hàng trùng lặp hoàn toàn
+ • Handle Missing Values - Fill median (số) / mode (chữ)
+ • Fix Dtypes - date: str → datetime
+ • Drop Irrelevant - Xóa review_id (không giúp dự đoán)
+ 
+ Vì sao: Dữ liệu bẩn → model học sai → dự đoán sai
+
+
+ Drop ID column: 'review_id'
+ BEFORE: [95525050017, 42761098009, 77577919458, 73836065495, 72969808926]
+ AFTER: [DROPPED]
+
+ Fix Dtypes: 'date'
+ BEFORE                         AFTER                         
+ ---------------------------- ----------------------------
+ datetime64[ns]                 datetime64[ns]                
+ 2025-11-08 00:00:00            2025-11-08 00:00:00           
+
+ Shape: (24587, 16) → (24587, 14)
+
+======================================================================
+ 📌 STEP 2: CATEGORICAL ENCODING
+======================================================================
+
+ Phương pháp:
+ • Binary Encoding (sex) - Male=1, Female=0
+  → Vì: Chỉ 2 giá trị, 0/1 là đủ
+ • One-Hot Encoding (platform) - Tạo 3 cột dummy
+  → Vì: 3 giá trị KHÔNG có thứ tự (app_store ≠ "lớn hơn" facebook)
+ • Label Encoding (bank_name) - Gán mỗi bank 1 số (0-34)
+  → Vì: 35 giá trị, One-Hot tạo 35 cột → quá nhiều
+ 
+ Vì sao: ML models chỉ hiểu số, không hiểu chữ
+
+
+ Binary Encoding: 'sex'
+ BEFORE                         AFTER                         
+ ---------------------------- ----------------------------
+ Female                         0                             
+ Male                           1                             
+ Male                           1                             
+ Male                           1                             
+ Female                         0                             
+ Female                         0                             
+ Female                         0                             
+ Male                           1                             
+
+ One-Hot Encoding: 'platform' → 3+ cột
+ BEFORE (platform)              AFTER (3 cột dummy)                               
+ ---------------------------- ------------------------------------------------
+ facebook                       app_store=0 facebook=1 google_play=0
+ facebook                       app_store=0 facebook=1 google_play=0
+ facebook                       app_store=0 facebook=1 google_play=0
+ facebook                       app_store=0 facebook=1 google_play=0
+ facebook                       app_store=0 facebook=1 google_play=0
+
+ Label Encoding: 'bank_name'
+ BEFORE                         AFTER                         
+ ---------------------------- ----------------------------
+ Vietcombank                    33                            
+ Vietcombank                    33                            
+ Vietcombank                    33                            
+ Vietcombank                    33                            
+ Vietcombank                    33                            
+ Vietcombank                    33                            
+ Vietcombank                    33                            
+ Vietcombank                    33                            
+
+ Shape: (24587, 14) → (24587, 16)
+
+======================================================================
+ 📌 STEP 3: OUTLIER HANDLING (IQR)
+======================================================================
+
+ Phương pháp: IQR (Interquartile Range)
+ • Q1 = percentile 25%, Q3 = percentile 75%
+ • IQR = Q3 - Q1
+ • Lower = Q1 - 1.5×IQR, Upper = Q3 + 1.5×IQR
+ • Giá trị ngoài [Lower, Upper] → CAP về biên gần nhất
+ 
+ Vì sao dùng IQR: Robust (không bị ảnh hưởng bởi outlier)
+ Vì sao Capping: Giữ nguyên số lượng data, chỉ điều chỉnh giá trị cực đoan
+
+
+ 'age': Q1=31, Q3=57, IQR=26
+ Bounds: [-8, 96]
+ BEFORE                              AFTER                              
+ --------------------------------- ---------------------------------
+ min=18                           min=18                          
+ max=70                           max=70                          
+ mean=44.2                        mean=44.2                       
+
+ 'credit_score': Q1=436, Q3=716, IQR=280
+ Bounds: [16, 1136]
+ BEFORE                              AFTER                              
+ --------------------------------- ---------------------------------
+ min=300                          min=300                         
+ max=850                          max=850                         
+ mean=574.7                       mean=574.7                      
+
+ 'balance': Q1=3700260631, Q3=11238964882, IQR=7538704251
+ Bounds: [-7607795746, 22547021258]
+ BEFORE                              AFTER                              
+ --------------------------------- ---------------------------------
+ min=99435                        min=99435                       
+ max=14999351636                  max=14999351636                 
+ mean=7460379340.4                mean=7460379340.4               
+
+ 'tenure': Q1=3, Q3=13, IQR=10
+ Bounds: [-12, 28]
+ BEFORE                              AFTER                              
+ --------------------------------- ---------------------------------
+ min=0                            min=0                           
+ max=20                           max=20                          
+ mean=8.1                         mean=8.1                        
+
+ Shape: (24587, 16) → (24587, 16)
+
+======================================================================
+ 📌 STEP 4: FEATURE ENGINEERING
+======================================================================
+
+ Phương pháp: Tạo features mới từ features có sẵn
+ • balance_per_product = balance / products_number
+  → Đo giá trị TB mỗi sản phẩm
+ • tenure_age_ratio = tenure / age
+  → Tỷ lệ trung thành so với tuổi
+ • is_high_value = (balance > median) AND (credit_score > 600)
+  → Phân khúc khách hàng VIP
+ • review_month, review_day_of_week = extract từ date
+  → Phát hiện xu hướng theo mùa/ngày
+ 
+ Vì sao: Tạo thêm thông tin model không tự suy ra → cải thiện accuracy
+
+
+ NEW FEATURE: 'balance_per_product'
+ Sample values: [14189787964.0, 1318864051.0, 1431700172.3333333, 3257883535.0, 14199306703.0]
+
+ NEW FEATURE: 'tenure_age_ratio'
+ Sample values: [0.05, 0.0, 0.05454545454545454, 0.2222222222222222, 0.22580645161290322]
+
+ NEW FEATURE: 'is_high_value'
+ Sample values: [1, 0, 0, 0, 0]
+
+ NEW FEATURE: 'review_month'
+ Sample values: [11.0, 4.0, 9.0, 1.0, 2.0]
+
+ NEW FEATURE: 'review_day_of_week'
+ Sample values: [5.0, 4.0, 1.0, 3.0, 4.0]
+
+ Dropped: 'date' → replaced by review_month + review_day_of_week
+
+ Shape: (24587, 16) → (24587, 20) (+4 features)
+
+======================================================================
+ 📌 STEP 5: FEATURE SCALING (MinMaxScaler)
+======================================================================
+
+ Phương pháp: MinMaxScaler
+ • Công thức: X_scaled = (X - X_min) / (X_max - X_min)
+ • Kết quả: Tất cả giá trị trong khoảng [0, 1]
+ 
+ Vì sao: age (18-70) vs balance (0-2B) → model ưu tiên balance
+ Scale giúp model đánh giá công bằng tất cả features
+ 
+ KHÔNG scale: churn (target), credit_card, active_member, is_high_value, platform_*
+
+
+ 'age':
+ BEFORE                                   AFTER (scaled 0-1)                      
+ -------------------------------------- --------------------------------------
+ 20.00                                    0.038462                                
+ 59.00                                    0.788462                                
+ 55.00                                    0.711538                                
+ min=18.00, max=70.00 → min=0.000000, max=1.000000
+
+ 'tenure':
+ BEFORE                                   AFTER (scaled 0-1)                      
+ -------------------------------------- --------------------------------------
+ 1.00                                     0.050000                                
+ 0.00                                     0.000000                                
+ 3.00                                     0.150000                                
+ min=0.00, max=20.00 → min=0.000000, max=1.000000
+
+ 'credit_score':
+ BEFORE                                   AFTER (scaled 0-1)                      
+ -------------------------------------- --------------------------------------
+ 788.00                                   0.887273                                
+ 350.00                                   0.090909                                
+ 737.00                                   0.794545                                
+ min=300.00, max=850.00 → min=0.000000, max=1.000000
+
+ 'balance':
+ BEFORE                                   AFTER (scaled 0-1)                      
+ -------------------------------------- --------------------------------------
+ 14189787964.00                           0.946026                                
+ 5275456204.00                            0.351708                                
+ 4295100517.00                            0.286348                                
+ min=99435.00, max=14999351636.00 → min=0.000000, max=1.000000
+
+ 'rating':
+ BEFORE                                   AFTER (scaled 0-1)                      
+ -------------------------------------- --------------------------------------
+ 5.00                                     1.000000                                
+ 3.00                                     0.500000                                
+ 4.00                                     0.750000                                
+ min=1.00, max=5.00 → min=0.000000, max=1.000000
+
+ 'balance_per_product':
+ BEFORE                                   AFTER (scaled 0-1)                      
+ -------------------------------------- --------------------------------------
+ 14189787964.00                           0.946027                                
+ 1318864051.00                            0.087925                                
+ 1431700172.33                            0.095448                                
+ min=54420.50, max=14999351636.00 → min=0.000000, max=1.000000
+
+ Shape: (24587, 20) → (24587, 20)
+
+======================================================================
+  FINAL SUMMARY
+======================================================================
+
+ Original: 24,587 rows × 16 columns
+ Final: 24,587 rows × 20 columns
+
+ Columns before: ['review_id', 'date', 'bank_name', 'rating', 'churn', 'platform', 'sex', 'age', 'tenure', 'credit_score', 'balance', 'products_number', 'credit_card', 'active_member', 'data_source', 'content']
+ Columns after: ['bank_name', 'rating', 'churn', 'sex', 'age', 'tenure', 'credit_score', 'balance', 'products_number', 'credit_card', 'active_member', 'content', 'platform_app_store', 'platform_facebook', 'platform_google_play', 'balance_per_product', 'tenure_age_ratio', 'is_high_value', 'review_month', 'review_day_of_week']
