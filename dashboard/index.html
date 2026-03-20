@@ -2372,7 +2372,7 @@
             try {
                 // Wait at least 1200ms for dramatic effect
                 const [response] = await Promise.all([
-                    fetch('http://localhost:8000/predict', {
+                    fetch('https://bank-churn-api-4w65.onrender.com/predict', {
                         method: 'POST',
                         headers: { 'Content-Type': 'application/json' },
                         body: JSON.stringify(payload)
